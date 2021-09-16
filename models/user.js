@@ -1,17 +1,23 @@
 const mongoose = require('mongoose');
 const passportLocalMongoose = require('passport-local-mongoose'); 
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
     emailId:{
         type: String,
         required: true,
+        Unique:true,
      },
      online:{
         type: Boolean,
         default: false,
      },
     rooms:[{
-         type :String,
+        name:{
+            type:String,
+        },
+        _id:{
+            type:String,
+        }
         }
     ]
 });

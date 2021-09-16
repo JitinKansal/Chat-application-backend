@@ -5,27 +5,43 @@ const User = require('../models/user');
 
 router.post('/api/v1/user/register',async(req,res)=>{
     try{
-        const {name,emailId,password} = req.body;
+        const {username,email,password} = req.body;
         console.log(req.body);
-        const user = new User({username:name,emailId:emailId});
+        const user = new User({username:username,emailId:email});
         const newUser = await User.register(user,password);
-        res.status(201).json({message : "User registered successfully"});
+        res.send({message : "User registered successfully",status:201,username:username});
     }
     catch(err){
-        res.status(500).json({error:err});
+        res.send({message:err,status:501});
     }
-   
 });
 
-router.post('/api/v1/user/login',passport.authenticate('local', { session: false }),(req,res)=> {
-    try{
-        res.json({message : "Successfully login"});
+router.post('/api/v1/user/login',passport.authenticate('local'),async (req,res)=>{
+    const data={
+        name:req.user.username,
+        rooms:req.user.rooms,
+        email:req.user.emailId,
+        id: req.user._id,
+        isOnline:req.user.online,
     }
-    catch(err){
-        res.json({message : "name/password is incorrect"});
+    const allUsers = await User.find({});
+    var otherUsers = [];
+    for(let i=0;i<allUsers.length;i++)
+    {
+        let obj={
+            isOnline:allUsers[i].online,
+            user:allUsers[i].username,
+            id:allUsers[i]._id,
+            emailId:allUsers[i].emailId,
+        }
+        otherUsers.push(obj);
     }
-}
-);
+    res.send({message : "Successfully login",status:201,user:data,otherUsers:otherUsers});
+});
 
+router.get('/api/v1/user/logout',(req,res)=>{
+    req.logout({message : "Successfully login",status:201,user:req.user});
+    res.send({message : "Successfully login",status:201,user:req.user});
+});
 
 module.exports = router;
