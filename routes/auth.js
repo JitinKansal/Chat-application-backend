@@ -30,12 +30,21 @@ router.post('/api/v1/user/login',passport.authenticate('local'),async (req,res)=
     {
         let obj={
             isOnline:allUsers[i].online,
-            user:allUsers[i].username,
-            id:allUsers[i]._id,
+            name:allUsers[i].username,
+            _id:allUsers[i]._id,
             emailId:allUsers[i].emailId,
         }
         otherUsers.push(obj);
     }
+    data.rooms.sort((a,b)=>{
+        const timeOfa = new Date(a.lastMessage.time);
+        const timeOfb = new Date(b.lastMessage.time);
+        if(timeOfa > timeOfb){
+            return -1;
+        }else{
+            return 1;
+        }
+    });
     res.send({message : "Successfully login",status:201,user:data,otherUsers:otherUsers});
 });
 

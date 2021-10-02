@@ -17,9 +17,30 @@ const userSchema = new mongoose.Schema({
         },
         _id:{
             type:String,
-        }
-        }
-    ]
+        },
+        seen:{
+            type:Boolean,
+            default:false,
+        },
+        unseenMessages:{
+            type:Number,
+            default:0,
+        },
+        lastMessage:{
+            body: {
+                type: String,
+                default:"",
+             },
+            from:{
+                type: String,
+                default:"",
+             },
+            time: {
+                type: String,
+                default:"",
+            },
+        },
+    }],
 });
 
 userSchema.plugin(passportLocalMongoose); 
