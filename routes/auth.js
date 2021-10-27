@@ -17,40 +17,45 @@ router.post('/api/v1/user/register',async(req,res)=>{
 });
 
 router.post('/api/v1/user/login',passport.authenticate('local'),async (req,res)=>{
-    const data={
-        name:req.user.username,
-        rooms:req.user.rooms,
-        email:req.user.emailId,
-        id: req.user._id,
-        isOnline:req.user.online,
-    }
-    const allUsers = await User.find({});
-    var otherUsers = [];
-    for(let i=0;i<allUsers.length;i++)
-    {
-        let obj={
-            isOnline:allUsers[i].online,
-            name:allUsers[i].username,
-            _id:allUsers[i]._id,
-            emailId:allUsers[i].emailId,
+    try{
+        const data={
+            name:req.user.username,
+            rooms:req.user.rooms,
+            email:req.user.emailId,
+            id: req.user._id,
+            isOnline:req.user.online,
         }
-        otherUsers.push(obj);
-    }
-    data.rooms.sort((a,b)=>{
-        const timeOfa = new Date(a.lastMessage.time);
-        const timeOfb = new Date(b.lastMessage.time);
-        if(timeOfa > timeOfb){
-            return -1;
-        }else{
-            return 1;
+        const allUsers = await User.find({});
+        var otherUsers = [];
+        for(let i=0;i<allUsers.length;i++)
+        {
+            let obj={
+                isOnline:allUsers[i].online,
+                name:allUsers[i].username,
+                _id:allUsers[i]._id,
+                emailId:allUsers[i].emailId,
+            }
+            otherUsers.push(obj);
         }
-    });
-    res.send({message : "Successfully login",status:201,user:data,otherUsers:otherUsers});
+        data.rooms.sort((a,b)=>{
+            const timeOfa = new Date(a.lastMessage.time);
+            const timeOfb = new Date(b.lastMessage.time);
+            if(timeOfa > timeOfb){
+                return -1;
+            }else{
+                return 1;
+            }
+        });
+        res.send({message : "Successfully login",status:201,user:data,otherUsers:otherUsers});
+    }catch(err){
+        console.log(err);
+        res.send({message:err,status:501});
+    }
 });
 
 router.get('/api/v1/user/logout',(req,res)=>{
-    req.logout({message : "Successfully login",status:201,user:req.user});
-    res.send({message : "Successfully login",status:201,user:req.user});
+    req.logOut();
+    res.send({message : "Successfully logged out",status:201});
 });
 
 module.exports = router;

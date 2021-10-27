@@ -174,13 +174,13 @@ io.on('connection',(socket) => {
 
     socket.on('seenAllMessages',async (data,fn) => {
         try{
-            console.log(data);
+            // console.log(data);
             await User.updateOne({ _id : data.userId},
                             {$set: { "rooms.$[elem].seen":true,"rooms.$[elem].unseenMessages":0}},
                             {arrayFilters: [{ "elem._id": data.roomId}]},
                             (err,res) => {
                                 if(err){
-                                    console.log(err);
+                                    // console.log(err);
                                     fn({error:err,status:501});
                                 }else{
                                     console.log(res);
@@ -192,6 +192,81 @@ io.on('connection',(socket) => {
             fn({error:err,status:500});
         }
     });
+
+    socket.on('delete_room',async (data,fn) => {
+        try{
+            // console.log(data);
+            User.updateOne({ _id : data.userId},
+                {$pull: {rooms:{_id:data.roomId}}},
+                async (err,res) => {
+                    if(err){
+                        console.log(err);
+                        fn({error:err,status:501});
+                    }else{
+                        // console.log(res);
+                        const otherUser = await User.find({username:data.chatName});
+                        let obj={
+                            isOnline:otherUser[0].online,
+                            name:otherUser[0].username,
+                            _id:otherUser[0]._id,
+                            emailId:otherUser[0].emailId,
+                        }
+                        fn({message:"Chat Deleted Successfully",status:200,obj:obj});
+                    }
+            });
+        }catch(err){
+            console.log(err);
+            fn({error:err,status:500});
+        }
+    });
+
+    socket.on('clear_messages',async (data,fn) => {
+        try{
+            // console.log(data);
+            Room.updateMany({ _id : data.roomId},
+                {$pull: {messages:{}}},async (err,res) => {
+                    if(err){
+                        console.log(err);
+                        fn({error:err,status:501});
+                    }else{
+                        // console.log(res);
+                        const message = {
+                            body:"",
+                            from:"",
+                            time: new Date(),
+                        }
+                        await User.updateOne({ _id : data.userId},
+                            {$set: { "rooms.$[elem].seen":true,"rooms.$[elem].unseenMessages":0,"rooms.$[elem].lastMessage":message}},
+                            {arrayFilters: [{ "elem._id": data.roomId}]},(err,res)=>{
+                                // console.log(res);
+                        });
+                        fn({message:"Messages Cleared Successfully",status:200});
+                    }
+            });
+        }catch(err){
+            console.log(err);
+            fn({error:err,status:500});
+        }
+    });
+
+    socket.on('all_users',async (userName,fn) => {
+        try{
+            const allUsers = await User.find({});
+            var otherUsers = [];
+            for(let i=0;i<allUsers.length;i++)
+            {
+                if(allUsers[i].username !== userName){
+                    let name = allUsers[i].username;
+                    otherUsers.push(name);
+                }
+            }
+            fn({message:"Sending all users",status:200,otherUsers:otherUsers});
+        }catch(err){
+            console.log(err);
+            fn({error:err,status:500});
+        }
+    });
+
 
     socket.on('disconnect',() => {
         console.log("UserLeft!!!");
