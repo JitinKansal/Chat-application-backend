@@ -5,6 +5,7 @@ if (process.env.NODE_ENV !== 'production') {
 //importing
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
 const {v4 : uuid} = require('uuid');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
@@ -19,6 +20,8 @@ const socketio = require('socket.io');
 //app config
 const app = express();
 const port = process.env.PORT || 8080;
+
+app.use(express.static(path.join(__dirname,'/public')));
 
 //DB config
 mongoose.connect(process.env.DB_URL,{
@@ -52,7 +55,7 @@ passport.deserializeUser(User.deserializeUser());
 
 //api routes
 app.get('/',(req,res)=>{
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/views/index.html');
 });
 
 app.use(require('./routes/auth'));

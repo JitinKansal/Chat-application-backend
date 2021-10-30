@@ -1,6 +1,9 @@
 ## This is the Snake Bite (Chat Application Backend).
 ## For real time we have used the Socket.io.
 
+## Link to acess all the API's is:
+https://snakebite-backend.herokuapp.com/
+
 ## Tech stack:
 1. Mongo DB
 2. Express
@@ -15,5 +18,6 @@
 6. passport-http
 7. passport-local
 8. passport-local-mongoose
-9. socket.io
-10. uuid
+9. path
+10. socket.io
+11. uuid
