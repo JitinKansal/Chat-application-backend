@@ -18,7 +18,7 @@ const socketio = require('socket.io');
 
 //app config
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 8080;
 
 //DB config
 mongoose.connect(process.env.DB_URL,{
@@ -35,7 +35,7 @@ mongoose.connect(process.env.DB_URL,{
 });
 
 //middlewares
-app.use(cors({origin: ["http://localhost:3000","http://192.168.0.103:3000"]}));
+app.use(cors({origin: process.env.FrontEndLink.split(", ")}));
 app.use(express.urlencoded({extended:true}));
 app.use(express.json());
 app.use(cookieParser());
@@ -58,18 +58,16 @@ app.get('/',(req,res)=>{
 app.use(require('./routes/auth'));
 app.use(require('./routes/room'));
 
-
 //listener
 const server = http.createServer(app);
 const io = socketio(server,{
     cors: {
-      origin: "http://localhost:3000",
-      methods: ["GET", "POST"],
-      allowedHeaders: ["my-custom-header"],
-      credentials: true
+        origin: process.env.FrontEndLink.split(", "),
+        methods: ["GET", "POST"],
+        allowedHeaders: ["my-custom-header"],
+        credentials: true
     }
   });
-
 
 io.on('connection',(socket) => {
     console.log("new connection!!!!!");
@@ -137,23 +135,25 @@ io.on('connection',(socket) => {
                 }else{
                     Room.findOne({_id:data.roomId},async (er,room)=>{
                         if(er){
-                            console.log("error from findone line number = 140",er);
+                            console.log(er);
                         }else{
                             for(let i=0;i<room.members.length;i++){
-                                // console.log(room.members[i],data.roomId);
-                                // console.log(data.message);
                                 if(room.members[i] === data.message.from){
                                     await User.updateOne({ username : room.members[i]},
                                         {$set: { "rooms.$[elem].seen":true,"rooms.$[elem].unseenMessages":0,"rooms.$[elem].lastMessage":data.message}},
                                         {arrayFilters: [{ "elem._id": data.roomId}]},(err,res)=>{
-                                            // console.log(res);
+                                            if(err){
+                                                console.log(err);
+                                            }
                                     });
                                 }
                                 else{
                                     await User.updateOne({ username : room.members[i]},
                                         {$set: { "rooms.$[elem].seen":false,"rooms.$[elem].unseenMessages":1,"rooms.$[elem].lastMessage":data.message}},
                                         {arrayFilters: [{ "elem._id": data.roomId}]},(err,res)=>{
-                                            // console.log(res);
+                                            if(err){
+                                                console.log(err);
+                                            }
                                     });
                                 }
                             }
@@ -174,13 +174,12 @@ io.on('connection',(socket) => {
 
     socket.on('seenAllMessages',async (data,fn) => {
         try{
-            // console.log(data);
             await User.updateOne({ _id : data.userId},
                             {$set: { "rooms.$[elem].seen":true,"rooms.$[elem].unseenMessages":0}},
                             {arrayFilters: [{ "elem._id": data.roomId}]},
                             (err,res) => {
                                 if(err){
-                                    // console.log(err);
+                                    console.log(err);
                                     fn({error:err,status:501});
                                 }else{
                                     console.log(res);
@@ -195,7 +194,6 @@ io.on('connection',(socket) => {
 
     socket.on('delete_room',async (data,fn) => {
         try{
-            // console.log(data);
             User.updateOne({ _id : data.userId},
                 {$pull: {rooms:{_id:data.roomId}}},
                 async (err,res) => {
@@ -203,7 +201,6 @@ io.on('connection',(socket) => {
                         console.log(err);
                         fn({error:err,status:501});
                     }else{
-                        // console.log(res);
                         const otherUser = await User.find({username:data.chatName});
                         let obj={
                             isOnline:otherUser[0].online,
@@ -222,14 +219,12 @@ io.on('connection',(socket) => {
 
     socket.on('clear_messages',async (data,fn) => {
         try{
-            // console.log(data);
             Room.updateMany({ _id : data.roomId},
                 {$pull: {messages:{}}},async (err,res) => {
                     if(err){
                         console.log(err);
                         fn({error:err,status:501});
                     }else{
-                        // console.log(res);
                         const message = {
                             body:"",
                             from:"",
@@ -238,7 +233,6 @@ io.on('connection',(socket) => {
                         await User.updateOne({ _id : data.userId},
                             {$set: { "rooms.$[elem].seen":true,"rooms.$[elem].unseenMessages":0,"rooms.$[elem].lastMessage":message}},
                             {arrayFilters: [{ "elem._id": data.roomId}]},(err,res)=>{
-                                // console.log(res);
                         });
                         fn({message:"Messages Cleared Successfully",status:200});
                     }
@@ -266,7 +260,6 @@ io.on('connection',(socket) => {
             fn({error:err,status:500});
         }
     });
-
 
     socket.on('disconnect',() => {
         console.log("UserLeft!!!");
